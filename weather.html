@@ -1,0 +1,2201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>24 HOUR Past Real-time Weather</title>
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- Leaflet.heat for heatmaps -->
+<script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+
+<!-- MarkerCluster -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+<!-- shpjs to read shapefile in browser -->
+<script src="https://unpkg.com/shpjs@3.4.1/dist/shp.min.js"></script>
+
+<!-- turf for spatial analysis -->
+<script src="https://unpkg.com/@turf/turf@6.5.0/turf.min.js"></script>
+
+<!-- Chart.js for charts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<!-- Leaflet Windbarb for wind visualization -->
+<script src="https://unpkg.com/leaflet-windbarb@1.0.1/src/leaflet-windbarb.js"></script>
+
+<!-- Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+  :root {
+    --primary: #0099cc;
+    --primary-dark: #0077a3;
+    --secondary: #00cca7;
+    --accent: #ff6b6b;
+    --dark: #1a2b3c;
+    --light: #f8f9fa;
+    --gray: #6c757d;
+    --border-radius: 8px;
+    --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    --transition: all 0.3s ease;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #1a2b3c 0%, #2c3e50 100%);
+    color: var(--light);
+    overflow: hidden;
+    height: 100vh;
+  }
+
+  #app {
+    display: flex;
+    height: 100vh;
+    position: relative;
+  }
+
+  /* Map Styles */
+  #map {
+    flex: 1;
+    height: 100%;
+    z-index: 1;
+  }
+
+  /* Side Panel */
+  #panel {
+    width: 380px;
+    background: rgba(26, 43, 60, 0.9);
+    backdrop-filter: blur(10px);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+    transition: var(--transition);
+    overflow-y: auto;
+  }
+
+  .panel-header {
+    padding: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.2);
+  }
+
+  .panel-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 5px;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .panel-subtitle {
+    font-size: 14px;
+    color: var(--gray);
+    margin-bottom: 15px;
+  }
+
+  .panel-section {
+    padding: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .section-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    color: var(--light);
+  }
+
+  .section-title i {
+    margin-right: 10px;
+    color: var(--primary);
+  }
+
+  /* Stats Grid */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 10px;
+  }
+
+  .stat-card {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--border-radius);
+    padding: 15px;
+    text-align: center;
+    transition: var(--transition);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .stat-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateY(-2px);
+  }
+
+  .stat-value {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 5px;
+    color: var(--primary);
+  }
+
+  .stat-label {
+    font-size: 12px;
+    color: var(--gray);
+  }
+
+  /* Controls */
+  .controls {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .control-label {
+    font-size: 14px;
+    color: var(--gray);
+    display: flex;
+    align-items: center;
+  }
+
+  .control-label i {
+    margin-right: 8px;
+    width: 16px;
+    text-align: center;
+  }
+
+  .time-slider {
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.1);
+    outline: none;
+    -webkit-appearance: none;
+  }
+
+  .time-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--primary);
+    cursor: pointer;
+    border: 2px solid var(--light);
+  }
+
+  .time-display {
+    font-size: 12px;
+    color: var(--gray);
+    text-align: center;
+    margin-top: 5px;
+  }
+
+  .btn-group {
+    display: flex;
+    gap: 10px;
+  }
+
+  .btn {
+    padding: 10px 15px;
+    border: none;
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex: 1;
+  }
+
+  .btn-primary {
+    background: var(--primary);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+  }
+
+  .btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--light);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+  .btn-accent {
+    background: var(--accent);
+    color: white;
+  }
+
+  .btn-accent:hover {
+    background: #ff5252;
+    transform: translateY(-2px);
+  }
+
+  /* Station Chips */
+  .station-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .station-chip {
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: var(--transition);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .station-chip:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .station-chip.active {
+    background: var(--primary);
+    color: white;
+  }
+
+  /* Chart Container */
+  .chart-container {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--border-radius);
+    padding: 15px;
+    margin-top: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* Layer Controls */
+  .layer-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .layer-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: var(--transition);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .layer-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .layer-item.active {
+    background: rgba(0, 153, 204, 0.2);
+    border-color: var(--primary);
+  }
+
+  .layer-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    background: rgba(0, 0, 0, 0.2);
+    font-size: 14px;
+  }
+
+  .layer-info {
+    flex: 1;
+  }
+
+  .layer-name {
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  .layer-desc {
+    font-size: 12px;
+    color: var(--gray);
+    margin-top: 2px;
+  }
+
+  .layer-toggle {
+    margin-left: 10px;
+  }
+
+  .toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 20px;
+  }
+
+  .toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.2);
+    transition: .4s;
+    border-radius: 20px;
+  }
+
+  .toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+  }
+
+  input:checked + .toggle-slider {
+    background-color: var(--primary);
+  }
+
+  input:checked + .toggle-slider:before {
+    transform: translateX(20px);
+  }
+
+  /* Analysis Section */
+  .analysis-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .analysis-results {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--border-radius);
+    padding: 15px;
+    margin-top: 15px;
+    font-size: 13px;
+    line-height: 1.5;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    max-height: 150px;
+    overflow-y: auto;
+  }
+
+  /* Map Controls */
+  .map-controls {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .map-control-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(26, 43, 60, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition);
+    backdrop-filter: blur(5px);
+  }
+
+  .map-control-btn:hover {
+    background: var(--primary);
+    transform: scale(1.1);
+  }
+
+  /* Bottom Bar */
+  .bottom-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(26, 43, 60, 0.9);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+  }
+
+  .footer-text {
+    font-size: 12px;
+    color: var(--gray);
+  }
+
+  .footer-logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    #panel {
+      width: 100%;
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: -100%;
+      z-index: 2000;
+    }
+    
+    #panel.active {
+      left: 0;
+    }
+    
+    .panel-toggle {
+      display: block;
+    }
+  }
+
+  /* Upload Area */
+  .upload-area {
+    border: 2px dashed rgba(255, 255, 255, 0.2);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: var(--transition);
+    margin-top: 10px;
+  }
+
+  .upload-area:hover {
+    border-color: var(--primary);
+    background: rgba(0, 153, 204, 0.05);
+  }
+
+  .upload-icon {
+    font-size: 24px;
+    margin-bottom: 10px;
+    color: var(--gray);
+  }
+
+  .upload-text {
+    font-size: 14px;
+    color: var(--gray);
+  }
+
+  /* Legend */
+  .legend {
+    position: absolute;
+    bottom: 60px;
+    left: 20px;
+    background: rgba(26, 43, 60, 0.9);
+    border-radius: var(--border-radius);
+    padding: 15px;
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    min-width: 200px;
+  }
+
+  .legend-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: var(--light);
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .legend-color {
+    width: 20px;
+    height: 20px;
+    border-radius: 3px;
+    margin-right: 10px;
+  }
+
+  .legend-label {
+    font-size: 12px;
+    color: var(--light);
+  }
+
+  .legend-scale {
+    display: flex;
+    height: 10px;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 5px;
+  }
+
+  .legend-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    margin-top: 3px;
+    color: var(--gray);
+  }
+
+  /* Cloud Cover Legend */
+  .cloud-legend {
+    position: absolute;
+    bottom: 200px;
+    left: 20px;
+    background: rgba(26, 43, 60, 0.9);
+    border-radius: var(--border-radius);
+    padding: 15px;
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    min-width: 180px;
+    display: none;
+  }
+
+  .cloud-legend.active {
+    display: block;
+  }
+
+  /* User Manual Dropdown */
+  .user-manual {
+    position: absolute;
+    top: 80px;
+    right: 20px;
+    z-index: 1000;
+  }
+
+  .manual-toggle {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: rgba(26, 43, 60, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition);
+    backdrop-filter: blur(5px);
+    font-size: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+
+  .manual-toggle:hover {
+    background: var(--primary);
+    transform: scale(1.1);
+  }
+
+  .manual-dropdown {
+    position: absolute;
+    top: 60px;
+    right: 0;
+    width: 320px;
+    background: rgba(26, 43, 60, 0.95);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: var(--transition);
+    z-index: 1001;
+  }
+
+  .manual-dropdown.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .manual-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .manual-title {
+    font-size: 18px;
+    font-weight: 700;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .manual-close {
+    background: none;
+    border: none;
+    color: var(--gray);
+    font-size: 18px;
+    cursor: pointer;
+    transition: var(--transition);
+  }
+
+  .manual-close:hover {
+    color: var(--accent);
+  }
+
+  .manual-content {
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  .manual-section {
+    margin-bottom: 20px;
+  }
+
+  .manual-section-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: var(--light);
+    display: flex;
+    align-items: center;
+  }
+
+  .manual-section-title i {
+    margin-right: 10px;
+    color: var(--primary);
+  }
+
+  .manual-item {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 12px;
+    padding: 10px;
+    border-radius: var(--border-radius);
+    background: rgba(255, 255, 255, 0.05);
+    transition: var(--transition);
+  }
+
+  .manual-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .manual-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    background: rgba(0, 153, 204, 0.2);
+    font-size: 14px;
+    color: var(--primary);
+    flex-shrink: 0;
+  }
+
+  .manual-text {
+    flex: 1;
+  }
+
+  .manual-item-title {
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 5px;
+  }
+
+  .manual-item-desc {
+    font-size: 13px;
+    color: var(--gray);
+    line-height: 1.4;
+  }
+
+  /* Tutorial Highlight */
+  .tutorial-highlight {
+    position: absolute;
+    border: 2px solid var(--accent);
+    border-radius: var(--border-radius);
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    pointer-events: none;
+    transition: var(--transition);
+  }
+
+  /* Tooltip */
+  .tooltip {
+    position: absolute;
+    background: rgba(26, 43, 60, 0.95);
+    color: white;
+    padding: 10px 15px;
+    border-radius: var(--border-radius);
+    font-size: 14px;
+    z-index: 10000;
+    max-width: 250px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    pointer-events: none;
+  }
+
+  .tooltip:after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 0;
+    border: 8px solid transparent;
+  }
+
+  .tooltip.top:after {
+    bottom: -16px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-top-color: rgba(26, 43, 60, 0.95);
+  }
+
+  .tooltip.bottom:after {
+    top: -16px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-bottom-color: rgba(26, 43, 60, 0.95);
+  }
+
+  .tooltip.left:after {
+    right: -16px;
+    top: 50%;
+    transform: translateY(-50%);
+    border-left-color: rgba(26, 43, 60, 0.95);
+  }
+
+  .tooltip.right:after {
+    left: -16px;
+    top: 50%;
+    transform: translateY(-50%);
+    border-right-color: rgba(26, 43, 60, 0.95);
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- Map -->
+  <div id="map"></div>
+
+  <!-- Side Panel -->
+  <div id="panel">
+    <div class="panel-header">
+      <div class="panel-title">Zimbabwe Weather Visualization</div>
+      <div class="panel-subtitle">Real-time weather visualization & analysis</div>
+    </div>
+
+    <!-- Weather Summary -->
+    <div class="panel-section">
+      <div class="section-title">
+        <i class="fas fa-chart-bar"></i>
+        Weather Summary
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="avg-temp">--°C</div>
+          <div class="stat-label">Avg Temperature</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="max-temp">--°C</div>
+          <div class="stat-label">Max Temperature</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="avg-wind">-- m/s</div>
+          <div class="stat-label">Avg Wind Speed</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="total-precip">-- mm</div>
+          <div class="stat-label">Total Precipitation</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Time Controls -->
+    <div class="panel-section">
+      <div class="section-title">
+        <i class="fas fa-clock"></i>
+        Time Controls
+      </div>
+      <div class="controls">
+        <div class="control-group">
+          <div class="control-label">
+            <i class="fas fa-sliders-h"></i>
+            Time Range (Past 24 Hours)
+          </div>
+          <input id="time-slider" type="range" min="0" max="23" value="23" class="time-slider">
+          <div class="time-display" id="time-label">Current Hour</div>
+        </div>
+        <div class="btn-group">
+          <button id="play" class="btn btn-primary">
+            <i class="fas fa-play"></i> Play
+          </button>
+          <button id="center" class="btn btn-secondary">
+            <i class="fas fa-crosshairs"></i> Center
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Temperature Display -->
+    <div class="panel-section">
+      <div class="section-title">
+        <i class="fas fa-thermometer-half"></i>
+        Temperature Display
+      </div>
+      <div class="control-group">
+        <select id="temp-dropdown" class="btn btn-secondary">
+          <option value="current">Current Temperature</option>
+          <option value="min">Minimum Temperature</option>
+          <option value="max">Maximum Temperature</option>
+          <option value="avg">Average Temperature</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Weather Stations -->
+    <div class="panel-section">
+      <div class="section-title">
+        <i class="fas fa-map-marker-alt"></i>
+        Weather Stations
+      </div>
+      <div class="station-chips" id="stations">
+        <!-- Stations will be populated dynamically -->
+      </div>
+    </div>
+
+    <!-- Chart -->
+    <div class="panel-section">
+      <div class="section-title">
+        <i class="fas fa-chart-line"></i>
+        Station Data
+      </div>
+      <div class="chart-container">
+        <canvas id="chart" height="200"></canvas>
+      </div>
+    </div>
+
+    <!-- Layer Management -->
+    <div class="panel-section">
+      <div class="section-title">
+        <i class="fas fa-layer-group"></i>
+        Weather Layers
+      </div>
+      <div class="layer-controls" id="layer-controls">
+        <!-- Layers will be populated dynamically -->
+      </div>
+    </div>
+
+    <!-- Spatial Analysis -->
+    <div class="panel-section">
+      <div class="section-title">
+        <i class="fas fa-search"></i>
+        Spatial Analysis
+      </div>
+      <div class="analysis-controls">
+        <button id="hotspotBtn" class="btn btn-accent">
+          <i class="fas fa-fire"></i> Hotspot
+        </button>
+        <button id="correlationBtn" class="btn btn-secondary">
+          <i class="fas fa-project-diagram"></i> Correlation
+        </button>
+      </div>
+      <div id="analysisResults" class="analysis-results">
+        Run analysis to see results...
+      </div>
+      <button id="clearAnalysisBtn" class="btn btn-secondary" style="margin-top: 10px;">
+        <i class="fas fa-trash"></i> Clear Analysis
+      </button>
+    </div>
+
+    <!-- Data Import -->
+    <div class="panel-section">
+      <div class="section-title">
+        <i class="fas fa-file-import"></i>
+        Data Import
+      </div>
+      <div id="drop" class="upload-area">
+        <div class="upload-icon">
+          <i class="fas fa-cloud-upload-alt"></i>
+        </div>
+        <div class="upload-text">Drop Shapefile ZIP here or click to browse</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Map Controls -->
+  <div class="map-controls">
+    <button id="panel-toggle" class="map-control-btn">
+      <i class="fas fa-bars"></i>
+    </button>
+    <button id="fullscreen" class="map-control-btn">
+      <i class="fas fa-expand"></i>
+    </button>
+  </div>
+
+  <!-- User Manual Dropdown -->
+  <div class="user-manual">
+    <button id="manual-toggle" class="manual-toggle">
+      <i class="fas fa-question-circle"></i>
+    </button>
+    <div class="manual-dropdown" id="manual-dropdown">
+      <div class="manual-header">
+        <div class="manual-title">User Manual</div>
+        <button class="manual-close" id="manual-close">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="manual-content">
+        <div class="manual-section">
+          <div class="manual-section-title">
+            <i class="fas fa-map"></i>
+            Map Navigation
+          </div>
+          <div class="manual-item">
+            <div class="manual-icon">
+              <i class="fas fa-mouse-pointer"></i>
+            </div>
+            <div class="manual-text">
+              <div class="manual-item-title">Pan & Zoom</div>
+              <div class="manual-item-desc">Click and drag to pan the map. Use the mouse wheel or +/- buttons to zoom in and out.</div>
+            </div>
+          </div>
+          <div class="manual-item">
+            <div class="manual-icon">
+              <i class="fas fa-crosshairs"></i>
+            </div>
+            <div class="manual-text">
+              <div class="manual-item-title">Center Map</div>
+              <div class="manual-item-desc">Click the crosshair button to center the map on Zimbabwe.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="manual-section">
+          <div class="manual-section-title">
+            <i class="fas fa-clock"></i>
+            Time Controls
+          </div>
+          <div class="manual-item">
+            <div class="manual-icon">
+              <i class="fas fa-sliders-h"></i>
+            </div>
+            <div class="manual-text">
+              <div class="manual-item-title">Time Slider</div>
+              <div class="manual-item-desc">Drag the slider to view weather data from different hours in the past 24 hours.</div>
+            </div>
+          </div>
+          <div class="manual-item">
+            <div class="manual-icon">
+              <i class="fas fa-play"></i>
+            </div>
+            <div class="manual-text">
+              <div class="manual-item-title">Play Animation</div>
+              <div class="manual-item-desc">Click the play button to animate through the past 24 hours of weather data.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="manual-section">
+          <div class="manual-section-title">
+            <i class="fas fa-layer-group"></i>
+            Weather Layers
+          </div>
+          <div class="manual-item">
+            <div class="manual-icon">
+              <i class="fas fa-thermometer-half"></i>
+            </div>
+            <div class="manual-text">
+              <div class="manual-item-title">Temperature</div>
+              <div class="manual-item-desc">View temperature data from weather stations. Click on stations for detailed information.</div>
+            </div>
+          </div>
+          <div class="manual-item">
+            <div class="manual-icon">
+              <i class="fas fa-wind"></i>
+            </div>
+            <div class="manual-text">
+              <div class="manual-item-title">Wind</div>
+              <div class="manual-item-desc">Visualize wind speed and direction with animated arrows.</div>
+            </div>
+          </div>
+          <div class="manual-item">
+            <div class="manual-icon">
+              <i class="fas fa-cloud"></i>
+            </div>
+            <div class="manual-text">
+              <div class="manual-item-title">Cloud Cover</div>
+              <div class="manual-item-desc">Toggle cloud cover visualization to see cloud patterns across Zimbabwe.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="manual-section">
+          <div class="manual-section-title">
+            <i class="fas fa-chart-line"></i>
+            Data Analysis
+          </div>
+          <div class="manual-item">
+            <div class="manual-icon">
+              <i class="fas fa-fire"></i>
+            </div>
+            <div class="manual-text">
+              <div class="manual-item-title">Hotspot Analysis</div>
+              <div class="manual-item-desc">Identify temperature hotspots and coldspots using spatial statistics.</div>
+            </div>
+          </div>
+          <div class="manual-item">
+            <div class="manual-icon">
+              <i class="fas fa-project-diagram"></i>
+            </div>
+            <div class="manual-text">
+              <div class="manual-item-title">Correlation Analysis</div>
+              <div class="manual-item-desc">Analyze relationships between different weather variables.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Temperature Legend -->
+  <div class="legend" id="temperature-legend">
+    <div class="legend-title">Temperature Scale (°C)</div>
+    <div class="legend-scale">
+      <div style="flex:1; background:#313695"></div>
+      <div style="flex:1; background:#4575b4"></div>
+      <div style="flex:1; background:#74add1"></div>
+      <div style="flex:1; background:#abd9e9"></div>
+      <div style="flex:1; background:#e0f3f8"></div>
+      <div style="flex:1; background:#ffffbf"></div>
+      <div style="flex:1; background:#fee090"></div>
+      <div style="flex:1; background:#fdae61"></div>
+      <div style="flex:1; background:#f46d43"></div>
+      <div style="flex:1; background:#d73027"></div>
+      <div style="flex:1; background:#a50026"></div>
+    </div>
+    <div class="legend-labels">
+      <span>10°</span>
+      <span>15°</span>
+      <span>20°</span>
+      <span>25°</span>
+      <span>30°</span>
+      <span>35°</span>
+    </div>
+  </div>
+
+  <!-- Cloud Cover Legend -->
+  <div class="cloud-legend" id="cloud-legend">
+    <div class="legend-title">Cloud Cover Scale (%)</div>
+    <div class="legend-scale">
+      <div style="flex:1; background:rgba(255, 255, 255, 0)"></div>
+      <div style="flex:1; background:rgba(200, 200, 255, 0.3)"></div>
+      <div style="flex:1; background:rgba(150, 150, 255, 0.5)"></div>
+      <div style="flex:1; background:rgba(100, 100, 255, 0.7)"></div>
+      <div style="flex:1; background:rgba(50, 50, 255, 0.9)"></div>
+    </div>
+    <div class="legend-labels">
+      <span>0%</span>
+      <span>25%</span>
+      <span>50%</span>
+      <span>75%</span>
+      <span>100%</span>
+    </div>
+  </div>
+
+  <!-- Bottom Bar -->
+  <div class="bottom-bar">
+    <div class="footer-text">
+      University of Zimbabwe  Department Of Geography and Geospatial Sciences• by Miss Munashe T. Chandiringa • R227372W
+    </div>
+    <div class="footer-logo">
+      <i class="fas fa-wind"></i>
+      <span>Zimbabwe Weather</span>
+    </div>
+  </div>
+</div>
+
+<!-- Main Script -->
+<script>
+// Configuration
+const stations = [
+  { id: 'harare', label: 'Harare', lat: -17.825165, lon: 31.03351 },
+  { id: 'bulawayo', label: 'Bulawayo', lat: -20.148936, lon: 28.577500 },
+  { id: 'mutare', label: 'Mutare', lat: -18.9707, lon: 32.6700 },
+  { id: 'gweru', label: 'Gweru', lat: -19.4550, lon: 29.8270 },
+  { id: 'masvingo', label: 'Masvingo', lat: -20.0648, lon: 30.8346 },
+  { id: 'chinhoyi', label: 'Chinhoyi', lat: -17.3600, lon: 30.1890 }
+];
+
+const OPEN_METEO_BASE = 'https://api.open-meteo.com/v1/forecast';
+
+// Initialize Map
+const map = L.map('map', {
+  zoomControl: false,
+  preferCanvas: true
+}).setView([-19.0, 30.5], 6);
+
+// Add base layers
+const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; OpenStreetMap contributors'
+}).addTo(map);
+
+const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+  attribution: 'Tiles &copy; Esri'
+});
+
+const terrainLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}', {
+  attribution: 'Tiles &copy; Esri'
+});
+
+// Weather overlay layers
+const precipitationLayer = L.tileLayer('https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=demo', {
+  attribution: 'Precipitation &copy; OpenWeatherMap',
+  opacity: 0.6
+});
+
+const cloudsLayer = L.tileLayer('https://tile.openweathermap.org/map/clouds_new/{z}/{x}/{y}.png?appid=demo', {
+  attribution: 'Clouds &copy; OpenWeatherMap',
+  opacity: 0.6
+});
+
+const pressureLayer = L.tileLayer('https://tile.openweathermap.org/map/pressure_new/{z}/{x}/{y}.png?appid=demo', {
+  attribution: 'Pressure &copy; OpenWeatherMap',
+  opacity: 0.6
+});
+
+// Create panes for proper layer ordering
+map.createPane('points'); map.getPane('points').style.zIndex = 450;
+map.createPane('heat'); map.getPane('heat').style.zIndex = 440;
+map.createPane('wind'); map.getPane('wind').style.zIndex = 435;
+map.createPane('overlays'); map.getPane('overlays').style.zIndex = 430;
+map.createPane('clouds'); map.getPane('clouds').style.zIndex = 425;
+map.createPane('analysis'); map.getPane('analysis').style.zIndex = 420;
+
+// Global variables
+let weatherData = {};
+let markersGroup = L.layerGroup().addTo(map);
+let windLayerGroup = L.layerGroup().addTo(map);
+let heatLayer = null;
+let cloudCoverLayer = null;
+let uploadedLayers = [];
+let activeStation = null;
+let currentBaseLayer = osmLayer;
+let activeOverlays = new Set();
+let currentTempMode = 'current';
+let analysisLayers = [];
+let zimbabweBounds = null;
+let activeWeatherLayer = 'temperature';
+
+// Layer registry
+const layerRegistry = {
+  'temperature': {
+    name: 'Temperature',
+    description: 'Station temperature data',
+    icon: 'fas fa-thermometer-half',
+    color: '#ff6b6b',
+    layer: markersGroup,
+    type: 'data',
+    active: true
+  },
+  'heatmap': {
+    name: 'Heat Map',
+    description: 'Temperature intensity visualization',
+    icon: 'fas fa-fire',
+    color: '#ff6b6b',
+    layer: null,
+    type: 'visualization',
+    active: true
+  },
+  'wind': {
+    name: 'Wind',
+    description: 'Wind speed and direction',
+    icon: 'fas fa-wind',
+    color: '#74b9ff',
+    layer: windLayerGroup,
+    type: 'data',
+    active: true
+  },
+  'clouds': {
+    name: 'Cloud Cover',
+    description: 'Cloud coverage percentage',
+    icon: 'fas fa-cloud',
+    color: '#dfe6e9',
+    layer: null,
+    type: 'visualization',
+    active: false
+  },
+  'precipitation': {
+    name: 'Precipitation',
+    description: 'Rainfall and precipitation',
+    icon: 'fas fa-cloud-rain',
+    color: '#0984e3',
+    layer: precipitationLayer,
+    type: 'overlay',
+    active: false
+  },
+  'pressure': {
+    name: 'Pressure',
+    description: 'Atmospheric pressure',
+    icon: 'fas fa-tachometer-alt',
+    color: '#636e72',
+    layer: pressureLayer,
+    type: 'overlay',
+    active: false
+  }
+};
+
+// Initialize UI
+document.addEventListener('DOMContentLoaded', function() {
+  initializeUI();
+  init();
+});
+
+// Initialize UI components
+function initializeUI() {
+  // Create layer controls
+  createLayerControls();
+  
+  // Add zoom control
+  L.control.zoom({
+    position: 'topright'
+  }).addTo(map);
+  
+  // Panel toggle for mobile
+  document.getElementById('panel-toggle').addEventListener('click', function() {
+    document.getElementById('panel').classList.toggle('active');
+  });
+  
+  // Fullscreen toggle
+  document.getElementById('fullscreen').addEventListener('click', function() {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+    } else {
+      document.exitFullscreen();
+    }
+  });
+  
+  // User manual toggle
+  document.getElementById('manual-toggle').addEventListener('click', function() {
+    document.getElementById('manual-dropdown').classList.toggle('active');
+  });
+  
+  // Close manual when clicking close button
+  document.getElementById('manual-close').addEventListener('click', function() {
+    document.getElementById('manual-dropdown').classList.remove('active');
+  });
+  
+  // Close manual when clicking outside
+  document.addEventListener('click', function(event) {
+    const manual = document.getElementById('manual-dropdown');
+    const toggle = document.getElementById('manual-toggle');
+    if (manual.classList.contains('active') && 
+        !manual.contains(event.target) && 
+        !toggle.contains(event.target)) {
+      manual.classList.remove('active');
+    }
+  });
+}
+
+// Create layer controls
+function createLayerControls() {
+  const layerControls = document.getElementById('layer-controls');
+  layerControls.innerHTML = '';
+  
+  Object.entries(layerRegistry).forEach(([id, layerInfo]) => {
+    const layerItem = document.createElement('div');
+    layerItem.className = `layer-item ${layerInfo.active ? 'active' : ''}`;
+    layerItem.dataset.layerId = id;
+    
+    layerItem.innerHTML = `
+      <div class="layer-icon" style="background: ${layerInfo.color}">
+        <i class="${layerInfo.icon}"></i>
+      </div>
+      <div class="layer-info">
+        <div class="layer-name">${layerInfo.name}</div>
+        <div class="layer-desc">${layerInfo.description}</div>
+      </div>
+      <div class="layer-toggle">
+        <label class="toggle-switch">
+          <input type="checkbox" ${layerInfo.active ? 'checked' : ''}>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    `;
+    
+    // Toggle layer visibility
+    const toggle = layerItem.querySelector('input');
+    toggle.addEventListener('change', function() {
+      toggleLayer(id, this.checked);
+    });
+    
+    // Click to activate layer (one at a time for weather layers)
+    layerItem.addEventListener('click', function(e) {
+      if (e.target.type !== 'checkbox') {
+        activateLayer(id);
+      }
+    });
+    
+    layerControls.appendChild(layerItem);
+  });
+}
+
+// Toggle layer visibility
+function toggleLayer(layerId, visible) {
+  const layerInfo = layerRegistry[layerId];
+  if (!layerInfo) return;
+  
+  layerInfo.active = visible;
+  
+  // Handle layer-specific logic
+  if (layerId === 'clouds') {
+    if (visible) {
+      // Create cloud cover layer if it doesn't exist
+      if (!cloudCoverLayer) {
+        createCloudCoverLayer();
+      } else {
+        map.addLayer(cloudCoverLayer);
+      }
+      // Show cloud legend
+      document.getElementById('cloud-legend').classList.add('active');
+    } else {
+      if (cloudCoverLayer) {
+        map.removeLayer(cloudCoverLayer);
+      }
+      // Hide cloud legend
+      document.getElementById('cloud-legend').classList.remove('active');
+    }
+  } else if (layerId === 'heatmap') {
+    if (visible && heatLayer) {
+      map.addLayer(heatLayer);
+    } else if (heatLayer) {
+      map.removeLayer(heatLayer);
+    }
+  } else if (layerInfo.layer) {
+    if (visible) {
+      map.addLayer(layerInfo.layer);
+    } else {
+      map.removeLayer(layerInfo.layer);
+    }
+  }
+  
+  // Update UI
+  document.querySelector(`.layer-item[data-layer-id="${layerId}"]`).classList.toggle('active', visible);
+  document.querySelector(`.layer-item[data-layer-id="${layerId}"] input`).checked = visible;
+}
+
+// Activate layer (one at a time for weather layers)
+function activateLayer(layerId) {
+  const layerInfo = layerRegistry[layerId];
+  if (!layerInfo) return;
+  
+  // For visualization layers, deactivate others
+  if (layerInfo.type === 'visualization' || layerInfo.type === 'overlay') {
+    // Deactivate other visualization/overlay layers
+    Object.keys(layerRegistry).forEach(id => {
+      if (id !== layerId && 
+          (layerRegistry[id].type === 'visualization' || layerRegistry[id].type === 'overlay')) {
+        layerRegistry[id].active = false;
+        if (layerRegistry[id].layer) {
+          map.removeLayer(layerRegistry[id].layer);
+        }
+        
+        // Update UI
+        const item = document.querySelector(`.layer-item[data-layer-id="${id}"]`);
+        if (item) {
+          item.classList.remove('active');
+          item.querySelector('input').checked = false;
+        }
+      }
+    });
+    
+    // Activate selected layer
+    layerInfo.active = true;
+    
+    // Special handling for cloud cover
+    if (layerId === 'clouds') {
+      if (!cloudCoverLayer) {
+        createCloudCoverLayer();
+      } else {
+        map.addLayer(cloudCoverLayer);
+      }
+      // Show cloud legend
+      document.getElementById('cloud-legend').classList.add('active');
+    } else if (layerInfo.layer) {
+      map.addLayer(layerInfo.layer);
+    }
+    
+    // Update UI
+    document.querySelector(`.layer-item[data-layer-id="${layerId}"]`).classList.add('active');
+    document.querySelector(`.layer-item[data-layer-id="${layerId}"] input`).checked = true;
+    
+    // Hide cloud legend if not clouds
+    if (layerId !== 'clouds') {
+      document.getElementById('cloud-legend').classList.remove('active');
+    }
+  }
+  
+  // Set as active weather layer
+  activeWeatherLayer = layerId;
+}
+
+// Create cloud cover layer clipped to Zimbabwe
+function createCloudCoverLayer() {
+  if (cloudCoverLayer) {
+    map.removeLayer(cloudCoverLayer);
+  }
+  
+  const idx = parseInt(document.getElementById('time-slider').value, 10);
+  const cloudPoints = [];
+  
+  // Zimbabwe bounds
+  const bounds = zimbabweBounds || [[-22.59, 23.05], [-15.43, 35.24]];
+  const gridSize = 25;
+  
+  for (let i = 0; i < gridSize; i++) {
+    for (let j = 0; j < gridSize; j++) {
+      const lat = bounds[0][0] + (bounds[1][0] - bounds[0][0]) * i / gridSize;
+      const lon = bounds[0][1] + (bounds[1][1] - bounds[0][1]) * j / gridSize;
+      
+      // Check if point is within Zimbabwe
+      if (zimbabweBounds && !isPointInZimbabwe(lat, lon)) {
+        continue;
+      }
+      
+      // Find nearest station
+      let nearestStation = null;
+      let minDistance = Infinity;
+      
+      Object.values(weatherData).forEach(w => {
+        const distance = Math.sqrt(
+          Math.pow(w.meta.lat - lat, 2) + Math.pow(w.meta.lon - lon, 2)
+        );
+        if (distance < minDistance) {
+          minDistance = distance;
+          nearestStation = w;
+        }
+      });
+      
+      if (nearestStation && nearestStation.series[idx]) {
+        const cloudCover = nearestStation.series[idx].cloudcover || 0;
+        const variation = (Math.random() - 0.5) * 20;
+        const adjustedCloudCover = Math.max(0, Math.min(100, cloudCover + variation));
+        const weight = Math.max(0.1, 1 - minDistance / 5);
+        cloudPoints.push([lat, lon, adjustedCloudCover * weight]);
+      }
+    }
+  }
+  
+  // Create heat layer for cloud cover
+  cloudCoverLayer = L.heatLayer(cloudPoints, {
+    radius: 35,
+    blur: 40,
+    maxZoom: 10,
+    gradient: {
+      0.0: 'rgba(255, 255, 255, 0)',
+      0.1: 'rgba(200, 200, 255, 0.3)',
+      0.3: 'rgba(150, 150, 255, 0.5)',
+      0.6: 'rgba(100, 100, 255, 0.7)',
+      1.0: 'rgba(50, 50, 255, 0.9)'
+    },
+    pane: 'clouds'
+  });
+  
+  // Add to map if active
+  if (layerRegistry['clouds'].active) {
+    cloudCoverLayer.addTo(map);
+  }
+  
+  // Update layer registry
+  layerRegistry['clouds'].layer = cloudCoverLayer;
+}
+
+// Check if point is within Zimbabwe
+function isPointInZimbabwe(lat, lon) {
+  const bounds = [[-22.59, 23.05], [-15.43, 35.24]];
+  return lat >= bounds[0][0] && lat <= bounds[1][0] && 
+         lon >= bounds[0][1] && lon <= bounds[1][1];
+}
+
+// Initialize the application
+async function init() {
+  addStationsToUI();
+  const promises = stations.map(s => fetchStation(s));
+  await Promise.all(promises);
+  createMarkersAndHeat();
+  activeStation = stations[0].id;
+  updateChartForStation(activeStation);
+  document.getElementById('time-slider').value = 23;
+  updateTimeDisplay();
+  updateStatistics();
+  
+  // Set up event listeners
+  setupEventListeners();
+  
+  // Initialize cloud cover layer (but don't add to map yet)
+  createCloudCoverLayer();
+}
+
+// Set up event listeners
+function setupEventListeners() {
+  // Time slider
+  document.getElementById('time-slider').addEventListener('input', updateTimeDisplay);
+  
+  // Play button
+  document.getElementById('play').addEventListener('click', togglePlay);
+  
+  // Center button
+  document.getElementById('center').addEventListener('click', () => {
+    map.fitBounds([[-22.59, 23.05], [-15.43, 35.24]]);
+  });
+  
+  // Temperature dropdown
+  document.getElementById('temp-dropdown').addEventListener('change', function() {
+    currentTempMode = this.value;
+    updateTemperatureDisplay();
+  });
+  
+  // Analysis buttons
+  document.getElementById('hotspotBtn').addEventListener('click', performHotspotAnalysis);
+  document.getElementById('correlationBtn').addEventListener('click', performCorrelationAnalysis);
+  document.getElementById('clearAnalysisBtn').addEventListener('click', clearAnalysisLayers);
+  
+  // File upload
+  document.getElementById('drop').addEventListener('click', handleFileUpload);
+}
+
+// Update time display
+function updateTimeDisplay() {
+  const idx = parseInt(document.getElementById('time-slider').value, 10);
+  const now = new Date();
+  const targetTime = new Date(now.getTime() - (23 - idx) * 3600 * 1000);
+  document.getElementById('time-label').textContent = targetTime.toLocaleString();
+  
+  // Update map display
+  updateMapForTime(idx);
+  updateStatistics();
+}
+
+// Toggle play animation
+let playInterval = null;
+function togglePlay() {
+  const playBtn = document.getElementById('play');
+  
+  if (playInterval) {
+    clearInterval(playInterval);
+    playInterval = null;
+    playBtn.innerHTML = '<i class="fas fa-play"></i> Play';
+  } else {
+    playBtn.innerHTML = '<i class="fas fa-pause"></i> Pause';
+    let idx = parseInt(document.getElementById('time-slider').value, 10);
+    playInterval = setInterval(() => {
+      idx = (idx + 1) % 24;
+      document.getElementById('time-slider').value = idx;
+      updateTimeDisplay();
+    }, 1000);
+  }
+}
+
+// Update map for current time
+function updateMapForTime(idx) {
+  // Update markers
+  markersGroup.eachLayer(layer => {
+    if (!layer.stationId) return;
+    const wd = weatherData[layer.stationId];
+    if (!wd) return;
+    const s = wd.series[idx];
+    if (!s) return;
+    
+    const t = s.temperature;
+    const r = 6 + Math.max(0, (t - 10) / 2);
+    layer.setStyle({
+      radius: r,
+      fillColor: getTemperatureColor(t),
+      fillOpacity: 0.8
+    });
+    
+    layer.setPopupContent(`
+      <strong>${wd.meta.label}</strong><br/>
+      🌡️ Temp: ${t} °C<br/>
+      💧 Humidity: ${s.humidity ?? 'N/A'}%<br/>
+      💨 Wind: ${s.windspeed} m/s<br/>
+      🧭 Direction: ${s.winddirection ?? 'N/A'}°<br/>
+      🌧️ Precip: ${s.precipitation} mm<br/>
+      ☁️ Cloud Cover: ${s.cloudcover ?? 'N/A'}%
+    `);
+  });
+  
+  // Update wind arrows
+  windLayerGroup.clearLayers();
+  Object.values(weatherData).forEach(w => {
+    const s = w.series[idx];
+    if (s && s.windspeed != null && s.winddirection != null) {
+      const windArrow = createWindArrow(w.meta.lat, w.meta.lon, s.windspeed, s.winddirection);
+      windArrow.addTo(windLayerGroup);
+    }
+  });
+  
+  // Update heat layer
+  if (heatLayer) map.removeLayer(heatLayer);
+  const heatPts = [];
+  Object.values(weatherData).forEach(w => {
+    const s = w.series[idx];
+    if (!s) return;
+    heatPts.push([w.meta.lat, w.meta.lon, Math.max(0, s.temperature)]);
+  });
+  heatLayer = L.heatLayer(heatPts, {
+    radius: 25,
+    blur: 30,
+    maxZoom: 9,
+    gradient: {
+      0.2: 'blue',
+      0.4: 'cyan',
+      0.6: 'lime',
+      0.8: 'yellow',
+      1.0: 'red'
+    },
+    pane: 'heat'
+  });
+  
+  if (layerRegistry['heatmap'].active) {
+    heatLayer.addTo(map);
+  }
+  layerRegistry['heatmap'].layer = heatLayer;
+  
+  // Update cloud cover
+  if (layerRegistry['clouds'].active) {
+    createCloudCoverLayer();
+  }
+}
+
+// Get temperature color
+function getTemperatureColor(temp) {
+  if (temp < 15) return '#313695';
+  if (temp < 18) return '#4575b4';
+  if (temp < 21) return '#74add1';
+  if (temp < 24) return '#abd9e9';
+  if (temp < 27) return '#e0f3f8';
+  if (temp < 30) return '#ffffbf';
+  if (temp < 33) return '#fee090';
+  if (temp < 36) return '#fdae61';
+  if (temp < 39) return '#f46d43';
+  if (temp < 42) return '#d73027';
+  return '#a50026';
+}
+
+// Create wind arrow
+function createWindArrow(lat, lon, windSpeed, windDirection) {
+  const arrowLength = Math.min(30 + windSpeed * 8, 80);
+  const arrowSvg = `
+    <svg width="${arrowLength}" height="${arrowLength}" viewBox="0 0 100 100">
+      <defs>
+        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+          <polygon points="0 0, 10 3.5, 0 7" fill="#74b9ff"/>
+        </marker>
+      </defs>
+      <line x1="20" y1="50" x2="80" y2="50" 
+            stroke="#74b9ff" 
+            stroke-width="4" 
+            marker-end="url(#arrowhead)"
+            transform="rotate(${windDirection} 50 50)"/>
+      <text x="50" y="30" text-anchor="middle" font-size="14" fill="#74b9ff" font-weight="bold">
+        ${windSpeed.toFixed(1)}
+      </text>
+    </svg>
+  `;
+
+  return L.marker([lat, lon], {
+    icon: L.divIcon({
+      className: 'wind-arrow-icon',
+      html: arrowSvg,
+      iconSize: [arrowLength, arrowLength],
+      iconAnchor: [arrowLength / 2, arrowLength / 2]
+    }),
+    pane: 'wind'
+  });
+}
+
+// Update statistics
+function updateStatistics() {
+  const idx = parseInt(document.getElementById('time-slider').value, 10);
+  let totalTemp = 0;
+  let maxTemp = -Infinity;
+  let totalWind = 0;
+  let totalPrecip = 0;
+  let count = 0;
+
+  Object.values(weatherData).forEach(w => {
+    const s = w.series[idx];
+    if (s) {
+      totalTemp += s.temperature;
+      maxTemp = Math.max(maxTemp, s.temperature);
+      totalWind += s.windspeed;
+      totalPrecip += s.precipitation || 0;
+      count++;
+    }
+  });
+
+  if (count > 0) {
+    document.getElementById('avg-temp').textContent = `${(totalTemp / count).toFixed(1)}°C`;
+    document.getElementById('max-temp').textContent = `${maxTemp.toFixed(1)}°C`;
+    document.getElementById('avg-wind').textContent = `${(totalWind / count).toFixed(1)} m/s`;
+    document.getElementById('total-precip').textContent = `${totalPrecip.toFixed(1)} mm`;
+  }
+}
+
+// Fetch station data
+async function fetchStation(st) {
+  try {
+    const url = buildOpenMeteoURL(st.lat, st.lon);
+    const r = await fetch(url);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const json = await r.json();
+    const hours = json.hourly.time;
+    const idxs = [];
+    const now = Date.now();
+    for (let i = hours.length - 1, count = 0; i >= 0 && count < 24; i--, count++) {
+      idxs.push(i);
+    }
+    idxs.reverse();
+    const series = idxs.map(i => ({
+      time: hours[i],
+      temperature: json.hourly.temperature_2m[i],
+      humidity: json.hourly.relativehumidity_2m ? json.hourly.relativehumidity_2m[i] : null,
+      windspeed: json.hourly.windspeed_10m[i],
+      winddirection: json.hourly.winddirection_10m ? json.hourly.winddirection_10m[i] : null,
+      precipitation: json.hourly.precipitation ? json.hourly.precipitation[i] : 0,
+      cloudcover: json.hourly.cloudcover ? json.hourly.cloudcover[i] : 0
+    }));
+    weatherData[st.id] = { meta: st, series };
+    return weatherData[st.id];
+  } catch (err) {
+    console.error('Failed fetching', st.label, err);
+    return null;
+  }
+}
+
+// Build OpenMeteo URL
+function buildOpenMeteoURL(lat, lon) {
+  const now = new Date();
+  const end = new Date(now.getTime());
+  const start = new Date(now.getTime() - 24 * 3600 * 1000);
+  const params = new URLSearchParams({
+    latitude: lat,
+    longitude: lon,
+    hourly: 'temperature_2m,relativehumidity_2m,windspeed_10m,winddirection_10m,precipitation,cloudcover',
+    timezone: 'auto',
+    start_date: start.toISOString().slice(0, 10),
+    end_date: end.toISOString().slice(0, 10)
+  });
+  return `${OPEN_METEO_BASE}?${params.toString()}`;
+}
+
+// Add stations to UI
+function addStationsToUI() {
+  const stationsWrap = document.getElementById('stations');
+  stations.forEach(s => {
+    const chip = document.createElement('div');
+    chip.className = 'station-chip';
+    chip.textContent = s.label;
+    chip.addEventListener('click', () => {
+      activeStation = s.id;
+      updateChartForStation(s.id);
+      highlightStationMarker(s.id);
+      
+      // Update active state
+      document.querySelectorAll('.station-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+    });
+    stationsWrap.appendChild(chip);
+  });
+}
+
+// Create markers and heat layer
+function createMarkersAndHeat() {
+  markersGroup.clearLayers();
+  const heatPts = [];
+  windLayerGroup.clearLayers();
+
+  Object.values(weatherData).forEach(w => {
+    const last = w.series[w.series.length - 1];
+    if (!last) return;
+    const t = last.temperature;
+    const marker = L.circleMarker([w.meta.lat, w.meta.lon], {
+      pane: 'points',
+      radius: 8 + Math.max(0, (t - 15) / 2),
+      color: 'white',
+      weight: 1.5,
+      fillColor: getTemperatureColor(t),
+      fillOpacity: 0.8
+    }).bindPopup(`
+      <strong>${w.meta.label}</strong><br/>
+      🌡️ Temp: ${t} °C<br/>
+      💧 Humidity: ${last.humidity ?? 'N/A'}%<br/>
+      💨 Wind: ${last.windspeed} m/s<br/>
+      🧭 Direction: ${last.winddirection ?? 'N/A'}°<br/>
+      🌧️ Precip: ${last.precipitation} mm<br/>
+      ☁️ Cloud Cover: ${last.cloudcover ?? 'N/A'}%
+    `);
+    marker.stationId = w.meta.id;
+    marker.addTo(markersGroup);
+
+    // Add wind arrows
+    if (last.windspeed != null && last.winddirection != null) {
+      const windArrow = createWindArrow(w.meta.lat, w.meta.lon, last.windspeed, last.winddirection);
+      windArrow.addTo(windLayerGroup);
+    }
+
+    heatPts.push([w.meta.lat, w.meta.lon, Math.max(0, t)]);
+  });
+
+  // Create heat layer
+  if (heatLayer) map.removeLayer(heatLayer);
+  heatLayer = L.heatLayer(heatPts, {
+    radius: 25,
+    blur: 30,
+    maxZoom: 9,
+    gradient: {
+      0.2: 'blue',
+      0.4: 'cyan',
+      0.6: 'lime',
+      0.8: 'yellow',
+      1.0: 'red'
+    },
+    pane: 'heat'
+  }).addTo(map);
+  
+  layerRegistry['heatmap'].layer = heatLayer;
+
+  markersGroup.addTo(map);
+  windLayerGroup.addTo(map);
+}
+
+// Highlight station marker
+function highlightStationMarker(stationId) {
+  markersGroup.eachLayer(l => {
+    if (l.stationId === stationId) {
+      map.setView(l.getLatLng(), 9);
+      l.openPopup();
+    }
+  });
+}
+
+// Update temperature display
+function updateTemperatureDisplay() {
+  const idx = parseInt(document.getElementById('time-slider').value, 10);
+  
+  markersGroup.eachLayer(layer => {
+    if (!layer.stationId) return;
+    const wd = weatherData[layer.stationId];
+    if (!wd) return;
+    
+    let displayTemp;
+    let popupText = `<strong>${wd.meta.label}</strong><br/>`;
+    
+    switch (currentTempMode) {
+      case 'current':
+        const s = wd.series[idx];
+        if (!s) return;
+        displayTemp = s.temperature;
+        popupText += `🌡️ Current Temp: ${displayTemp} °C<br/>`;
+        break;
+      case 'min':
+        displayTemp = Math.min(...wd.series.map(s => s.temperature));
+        popupText += `🌡️ Min Temp: ${displayTemp} °C<br/>`;
+        break;
+      case 'max':
+        displayTemp = Math.max(...wd.series.map(s => s.temperature));
+        popupText += `🌡️ Max Temp: ${displayTemp} °C<br/>`;
+        break;
+      case 'avg':
+        const sum = wd.series.reduce((acc, s) => acc + s.temperature, 0);
+        displayTemp = sum / wd.series.length;
+        popupText += `🌡️ Avg Temp: ${displayTemp.toFixed(1)} °C<br/>`;
+        break;
+    }
+    
+    const s = wd.series[idx];
+    if (s) {
+      popupText += `💧 Humidity: ${s.humidity ?? 'N/A'}%<br/>`;
+      popupText += `💨 Wind: ${s.windspeed} m/s<br/>`;
+      popupText += `🧭 Direction: ${s.winddirection ?? 'N/A'}°<br/>`;
+      popupText += `🌧️ Precip: ${s.precipitation} mm<br/>`;
+      popupText += `☁️ Cloud Cover: ${s.cloudcover ?? 'N/A'}%`;
+    }
+    
+    const r = 6 + Math.max(0, (displayTemp - 10) / 2);
+    layer.setStyle({
+      radius: r,
+      fillColor: getTemperatureColor(displayTemp)
+    });
+    layer.setPopupContent(popupText);
+  });
+}
+
+// Chart setup
+const chartCtx = document.getElementById('chart').getContext('2d');
+let chart = new Chart(chartCtx, {
+  type: 'line',
+  data: { labels: [], datasets: [] },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'bottom', labels: { color: '#fff' } },
+      tooltip: { mode: 'index', intersect: false }
+    },
+    scales: {
+      x: { ticks: { color: '#aaa' }, grid: { color: 'rgba(255,255,255,0.1)' } },
+      y: { ticks: { color: '#aaa' }, grid: { color: 'rgba(255,255,255,0.1)' } }
+    }
+  }
+});
+
+// Update chart for station
+function updateChartForStation(stationId) {
+  const data = weatherData[stationId];
+  if (!data) return;
+  const labels = data.series.map(s => new Date(s.time).toLocaleTimeString());
+  chart.data.labels = labels;
+  chart.data.datasets = [
+    {
+      label: 'Temperature (°C)',
+      data: data.series.map(s => s.temperature),
+      borderColor: '#ff6b6b',
+      backgroundColor: 'rgba(255, 107, 107, 0.1)',
+      tension: 0.3,
+      fill: true
+    },
+    {
+      label: 'Humidity (%)',
+      data: data.series.map(s => s.humidity),
+      borderColor: '#74b9ff',
+      backgroundColor: 'rgba(116, 185, 255, 0.1)',
+      tension: 0.3,
+      fill: true
+    },
+    {
+      label: 'Wind Speed (m/s)',
+      data: data.series.map(s => s.windspeed),
+      borderColor: '#00b894',
+      backgroundColor: 'rgba(0, 184, 148, 0.1)',
+      tension: 0.3,
+      fill: true
+    }
+  ];
+  chart.update();
+}
+
+// Handle file upload
+function handleFileUpload() {
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = '.zip';
+  inp.onchange = () => {
+    if (inp.files.length) {
+      alert('Shapefile upload functionality would be implemented here');
+    }
+  };
+  inp.click();
+}
+
+// Helper Function: Compute Pearson Correlation Coefficient (r)
+function calculatePearson(x, y) {
+  const n = x.length;
+  if (n === 0 || n !== y.length) return 0;
+  
+  const meanX = x.reduce((a, b) => a + b, 0) / n;
+  const meanY = y.reduce((a, b) => a + b, 0) / n;
+  
+  let numerator = 0;
+  let denominatorX = 0;
+  let denominatorY = 0;
+  
+  for (let i = 0; i < n; i++) {
+    const diffX = x[i] - meanX;
+    const diffY = y[i] - meanY;
+    numerator += diffX * diffY;
+    denominatorX += diffX * diffX;
+    denominatorY += diffY * diffY;
+  }
+  
+  if (denominatorX === 0 || denominatorY === 0) return 0;
+  return numerator / Math.sqrt(denominatorX * denominatorY);
+}
+
+// Helper Function: Qualitative descriptor for r-values
+function getCorrelationStrength(r) {
+  const absR = Math.abs(r);
+  let description = '';
+  if (absR >= 0.7) description = 'Strong';
+  else if (absR >= 0.4) description = 'Moderate';
+  else if (absR >= 0.1) description = 'Weak';
+  else description = 'Negligible';
+  
+  return `${description} ${r >= 0 ? 'Positive' : 'Negative'}`;
+}
+
+// Spatial Hotspot/Coldspot Vector Generation
+function performHotspotAnalysis() {
+  clearAnalysisLayers();
+  
+  const idx = parseInt(document.getElementById('time-slider').value, 10);
+  const activeData = [];
+  
+  Object.values(weatherData).forEach(w => {
+    const s = w.series[idx];
+    if (s) {
+      activeData.push({ 
+        id: w.meta.id, 
+        label: w.meta.label, 
+        lat: w.meta.lat, 
+        lon: w.meta.lon, 
+        temp: s.temperature 
+      });
+    }
+  });
+  
+  if (activeData.length < 2) {
+    document.getElementById('analysisResults').innerHTML = 'Insufficient spatial data points to evaluate variations.';
+    return;
+  }
+  
+  const temps = activeData.map(d => d.temp);
+  const mean = temps.reduce((a, b) => a + b, 0) / temps.length;
+  const variance = temps.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / temps.length;
+  const stdDev = Math.sqrt(variance) || 1;
+  
+  let hotspotsCount = 0;
+  let coldspotsCount = 0;
+  let htmlResults = `<strong>Spatial Z-Score Analysis (Hour Index: ${idx})</strong><br/><hr style="border-color:rgba(255,255,255,0.1); margin: 5px 0;">`;
+  
+  activeData.forEach(d => {
+    const zScore = (d.temp - mean) / stdDev;
+    let color = null;
+    let classification = '';
+    
+    if (zScore > 1.0) {
+      color = '#ff4d4d';
+      classification = '🔥 Hotspot Anomaly';
+      hotspotsCount++;
+    } else if (zScore < -1.0) {
+      color = '#33ccff';
+      classification = '🧊 Coldspot Anomaly';
+      coldspotsCount++;
+    }
+    
+    if (color) {
+      const turfPoint = turf.point([d.lon, d.lat]);
+      const turfBufferCircle = turf.circle(turfPoint, 40, { units: 'kilometers' });
+      
+      const geoJsonLayer = L.geoJSON(turfBufferCircle, {
+        style: {
+          color: color,
+          fillColor: color,
+          fillOpacity: 0.25,
+          weight: 2,
+          dashArray: '5, 5'
+        },
+        pane: 'analysis'
+      }).bindPopup(`<strong>${d.label}</strong><br/>${classification}<br/>Z-Score: ${zScore.toFixed(2)}<br/>Deviation: ${(d.temp - mean).toFixed(1)}°C`).addTo(map);
+      
+      analysisLayers.push(geoJsonLayer);
+    }
+  });
+  
+  htmlResults += `Regional Mean: ${mean.toFixed(1)}°C (&sigma;: ${stdDev.toFixed(2)})<br/>`;
+  htmlResults += `🔥 Detected Hotspots (>1&sigma;): <strong>${hotspotsCount}</strong><br/>`;
+  htmlResults += `🧊 Detected Coldspots (<-1&sigma;): <strong>${coldspotsCount}</strong><br/>`;
+  htmlResults += `<span style="font-size:11px; color:#aaa;">*Dotted 40km buffers rendered over anomalies.</span>`;
+  
+  document.getElementById('analysisResults').innerHTML = htmlResults;
+}
+
+// Time-Series Correlation Coefficient Matrix Computation
+function performCorrelationAnalysis() {
+  if (!activeStation || !weatherData[activeStation]) {
+    document.getElementById('analysisResults').innerHTML = 'Select a weather station from the grid to map vector correlations.';
+    return;
+  }
+  
+  const wd = weatherData[activeStation];
+  const temps = wd.series.map(s => s.temperature);
+  const humidities = wd.series.map(s => s.humidity ?? 0);
+  const winds = wd.series.map(s => s.windspeed);
+  const clouds = wd.series.map(s => s.cloudcover ?? 0);
+  
+  const rTempHumid = calculatePearson(temps, humidities);
+  const rTempWind = calculatePearson(temps, winds);
+  const rTempCloud = calculatePearson(temps, clouds);
+  
+  document.getElementById('analysisResults').innerHTML = `
+    <strong>Kinematic Pearson Matrix: ${wd.meta.label}</strong><br/>
+    <hr style="border-color:rgba(255,255,255,0.1); margin: 5px 0;">
+    💧 Temp vs Humidity: <strong>${rTempHumid.toFixed(2)}</strong><br/>
+    <span style="font-size:11px; color:#aaa; display:block; margin-bottom:4px;">↳ ${getCorrelationStrength(rTempHumid)} Relationship</span>
+    💨 Temp vs Wind Speed: <strong>${rTempWind.toFixed(2)}</strong><br/>
+    <span style="font-size:11px; color:#aaa; display:block; margin-bottom:4px;">↳ ${getCorrelationStrength(rTempWind)} Relationship</span>
+    ☁️ Temp vs Cloud Cover: <strong>${rTempCloud.toFixed(2)}</strong><br/>
+    <span style="font-size:11px; color:#aaa;">↳ ${getCorrelationStrength(rTempCloud)} Relationship</span>
+  `;
+}
+
+// Reset Map Canvas Analysis Layers
+function clearAnalysisLayers() {
+  analysisLayers.forEach(layer => map.removeLayer(layer));
+  analysisLayers = [];
+  document.getElementById('analysisResults').innerHTML = 'Run analysis to see results...';
+}
+
+// Initialize the first station as active
+setTimeout(() => {
+  if (document.querySelector('.station-chip')) {
+    document.querySelector('.station-chip').click();
+  }
+}, 1000);
+</script>
+</body>
+</html>
