@@ -25,6 +25,7 @@
             <nav class="hidden md:flex space-x-8 font-medium text-sm items-center">
                 <a href="#about" class="text-gray-600 hover:text-blue-600 transition">Overview</a>
                 <a href="#research" class="text-gray-600 hover:text-blue-600 transition">Spatial Modeling Projects</a>
+                <a href="#weather" class="text-gray-600 hover:text-blue-600 transition">Weather Dashboard</a>
                 <a href="#technical" class="text-gray-600 hover:text-blue-600 transition">Technical Stack</a>
                 <a href="#" class="bg-blue-900 text-white px-5 py-2.5 rounded hover:bg-blue-800 transition shadow-sm">Download CV</a>
             </nav>
@@ -138,8 +139,24 @@
         </div>
     </section>
 
+    <!-- Interactive Weather Dashboard Embed Section -->
+    <section id="weather" class="py-20 bg-gray-50 border-t border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="mb-12 text-center">
+                <h2 class="text-3xl font-bold text-gray-900 serif-title">Interactive Weather Map</h2>
+                <div class="w-20 h-1 bg-blue-600 mx-auto mt-4"></div>
+                <p class="text-gray-600 mt-4 max-w-2xl mx-auto">A live geospatial weather tracking application built with real-time API integrations.</p>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-xl overflow-hidden border border-gray-200">
+                <!-- This iframe displays the weather.html file right on the page -->
+                <iframe src="weather.html" class="w-full h-[600px] border-none"></iframe>
+            </div>
+        </div>
+    </section>
+
     <!-- Technical Skills Section -->
-    <section id="technical" class="bg-white border-t border-gray-200 py-20">
+    <section id="technical" class="bg-white py-20">
         <div class="max-w-7xl mx-auto px-6">
             <h2 class="text-2xl font-bold text-gray-900 mb-8 serif-title text-center">Comprehensive Technical Capabilities</h2>
             <div class="grid md:grid-cols-3 gap-8 text-center">
