@@ -6,35 +6,49 @@
     <title>Geospatial Sciences Portfolio</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts for a more academic/professional typography -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Merriweather:wght@300;400;700&display=swap" rel="stylesheet">
+    <!-- Google Fonts for academic typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
+        /* Enables smooth scrolling when clicking navigation tabs */
+        html { 
+            scroll-behavior: smooth; 
+            /* Prevents the sticky header from hiding section titles */
+            scroll-padding-top: 5.5rem; 
+        }
         body { font-family: 'Inter', sans-serif; }
         .serif-title { font-family: 'Merriweather', serif; }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 antialiased selection:bg-blue-200 selection:text-blue-900">
+<body class="bg-slate-50 text-gray-800 antialiased selection:bg-blue-200 selection:text-blue-900">
 
-    <!-- Minimalist Professional Header -->
-    <header class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
+    <!-- Premium Frosted-Glass Header -->
+    <header class="bg-white/80 backdrop-blur-md border-b border-gray-200 shadow-sm sticky top-0 z-50 transition-all duration-300">
         <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-            <div class="flex flex-col">
-                <h1 class="text-2xl font-bold tracking-tight text-gray-900 serif-title">Geospatial Portfolio</h1>
-                <span class="text-xs font-semibold uppercase tracking-widest text-blue-600">Research & Analytics</span>
+            <div class="flex flex-col group cursor-pointer" onclick="window.scrollTo(0,0)">
+                <h1 class="text-2xl font-bold tracking-tight text-gray-900 serif-title group-hover:text-blue-700 transition duration-300">Geospatial Portfolio</h1>
+                <span class="text-xs font-bold uppercase tracking-widest text-blue-600">Research & Analytics</span>
             </div>
-            <nav class="hidden md:flex space-x-8 font-medium text-sm items-center">
-                <a href="#about" class="text-gray-600 hover:text-blue-600 transition">Overview</a>
-                <a href="#research" class="text-gray-600 hover:text-blue-600 transition">Spatial Modeling Projects</a>
-                <a href="#weather" class="text-gray-600 hover:text-blue-600 transition">Weather Dashboard</a>
-                <a href="#technical" class="text-gray-600 hover:text-blue-600 transition">Technical Stack</a>
-                <a href="#" class="bg-blue-900 text-white px-5 py-2.5 rounded hover:bg-blue-800 transition shadow-sm">Download CV</a>
+            
+            <!-- Fully Interactive Navigation Tabs -->
+            <nav class="hidden md:flex space-x-2 font-medium text-sm items-center">
+                <a href="#about" class="px-4 py-2 rounded-md text-gray-600 hover:text-blue-700 hover:bg-blue-50 transition-all duration-300">Overview</a>
+                <a href="#research" class="px-4 py-2 rounded-md text-gray-600 hover:text-blue-700 hover:bg-blue-50 transition-all duration-300">Spatial Modeling</a>
+                <a href="#weather" class="px-4 py-2 rounded-md text-gray-600 hover:text-blue-700 hover:bg-blue-50 transition-all duration-300">Weather Dashboard</a>
+                <a href="#technical" class="px-4 py-2 rounded-md text-gray-600 hover:text-blue-700 hover:bg-blue-50 transition-all duration-300">Technical Stack</a>
+                <!-- Link points to a hypothetical CV file for now -->
+                <a href="CV_Application.pdf" target="_blank" class="ml-4 bg-blue-900 text-white px-5 py-2.5 rounded-md hover:bg-blue-800 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 shadow-sm flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Download CV
+                </a>
             </nav>
         </div>
     </header>
 
-    <!-- Academic & Professional Hero Section -->
-    <section id="about" class="bg-white border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-6 py-20 grid lg:grid-cols-2 gap-12 items-center">
+    <!-- Dynamic Hero Section -->
+    <section id="about" class="bg-gradient-to-br from-white to-slate-100 border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-6 py-24 grid lg:grid-cols-2 gap-12 items-center">
             <div class="space-y-6">
                 <h2 class="text-4xl md:text-5xl font-bold text-gray-900 leading-tight serif-title">
                     Translating Earth Observation Data into Strategic Insights.
@@ -43,25 +57,37 @@
                     Specializing in remote sensing pipelines, robust academic research, and predictive spatial modeling. Dedicated to leveraging advanced geographic information systems and machine learning to analyze complex environmental dynamics and support data-driven decision-making.
                 </p>
                 <div class="flex gap-4 pt-4">
-                    <a href="#research" class="bg-blue-900 text-white px-6 py-3 rounded font-medium hover:bg-blue-800 transition">View Live Dashboards</a>
-                    <a href="https://github.com/munashechandiringa-web" target="_blank" class="bg-gray-100 text-gray-700 border border-gray-300 px-6 py-3 rounded font-medium hover:bg-gray-200 transition">GitHub Repositories</a>
+                    <a href="#research" class="bg-blue-900 text-white px-6 py-3 rounded-md font-medium hover:bg-blue-800 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300">View Live Dashboards</a>
+                    <a href="https://github.com/munashechandiringa-web" target="_blank" class="bg-white text-gray-700 border border-gray-300 px-6 py-3 rounded-md font-medium hover:bg-gray-50 hover:text-blue-700 transition-all duration-300 shadow-sm">GitHub Repositories</a>
                 </div>
             </div>
-            <!-- Focus Areas Grid -->
+            <!-- Focus Areas Grid with Hover Effects -->
             <div class="grid grid-cols-2 gap-4">
-                <div class="bg-gray-50 p-6 rounded-lg border border-gray-100 shadow-sm">
+                <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300">
+                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
                     <h3 class="font-bold text-gray-900 mb-2">Remote Sensing</h3>
                     <p class="text-sm text-gray-600">Multi-sensor satellite imagery processing and pixel-level raster analysis.</p>
                 </div>
-                <div class="bg-gray-50 p-6 rounded-lg border border-gray-100 shadow-sm">
+                <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300">
+                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path></svg>
+                    </div>
                     <h3 class="font-bold text-gray-900 mb-2">Machine Learning</h3>
                     <p class="text-sm text-gray-600">Random forest projections and predictive spatial modeling.</p>
                 </div>
-                <div class="bg-gray-50 p-6 rounded-lg border border-gray-100 shadow-sm">
+                <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300">
+                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"></path></svg>
+                    </div>
                     <h3 class="font-bold text-gray-900 mb-2">Web Mapping</h3>
                     <p class="text-sm text-gray-600">Deployment of interactive dashboards via Google Earth Engine and ESRI.</p>
                 </div>
-                <div class="bg-gray-50 p-6 rounded-lg border border-gray-100 shadow-sm">
+                <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300">
+                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    </div>
                     <h3 class="font-bold text-gray-900 mb-2">Statistical Validation</h3>
                     <p class="text-sm text-gray-600">Rigorous accuracy assessments, confusion matrices, and kappa coefficients.</p>
                 </div>
@@ -70,55 +96,61 @@
     </section>
 
     <!-- Master Project Section -->
-    <section id="research" class="py-20">
+    <section id="research" class="py-24">
         <div class="max-w-7xl mx-auto px-6">
-            <div class="mb-12">
+            <div class="mb-14">
                 <h2 class="text-3xl font-bold text-gray-900 serif-title">Academic Research & Dashboards</h2>
-                <div class="w-20 h-1 bg-blue-600 mt-4"></div>
+                <div class="w-20 h-1.5 bg-blue-700 mt-4 rounded-full"></div>
             </div>
 
-            <!-- Dissertation / Major Project Card -->
-            <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden flex flex-col">
+            <!-- Dissertation Card with enhanced styling -->
+            <div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden flex flex-col hover:shadow-2xl transition-shadow duration-500">
                 
-                <!-- Top Header Info -->
-                <div class="p-8 border-b border-gray-100 bg-gray-50">
-                    <div class="flex justify-between items-start mb-4">
-                        <div>
-                            <span class="text-xs font-bold uppercase tracking-widest text-blue-600">Honours Dissertation Project</span>
-                            <h3 class="text-2xl font-bold text-gray-900 mt-2 serif-title">Spatial Modeling of Vegetation Dynamics & Climate Change Scenarios: Nyanga National Park</h3>
-                        </div>
-                        <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-3 py-1 rounded-full">2003 - 2063 Timeline</span>
+                <div class="p-8 md:p-10 border-b border-gray-100 bg-slate-50 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 p-8 opacity-5">
+                        <svg class="w-32 h-32" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
                     </div>
-                    <p class="text-gray-700 leading-relaxed max-w-4xl">
+                    <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                        <div>
+                            <span class="text-xs font-bold uppercase tracking-widest text-blue-700 bg-blue-100 px-3 py-1 rounded-full">Honours Dissertation Project</span>
+                            <h3 class="text-2xl md:text-3xl font-bold text-gray-900 mt-4 serif-title">Spatial Modeling of Vegetation Dynamics & Climate Change Scenarios: Nyanga National Park</h3>
+                        </div>
+                        <span class="bg-slate-800 text-white text-xs font-semibold px-4 py-2 rounded-full shadow-sm whitespace-nowrap">2003 - 2063 Timeline</span>
+                    </div>
+                    <p class="text-gray-700 leading-relaxed max-w-4xl relative z-10 text-lg">
                         A comprehensive spatial modeling pipeline engineered to analyze two decades of historical vegetation dynamics. Utilizing advanced machine learning algorithms to generate predictive environmental projections and assess climate change impacts up to the year 2063.
                     </p>
                 </div>
 
-                <!-- Bottom Split Layout: Methodology & Map Embed -->
                 <div class="grid lg:grid-cols-3">
-                    <!-- Left: Academic Methodology -->
-                    <div class="p-8 lg:border-r border-gray-200 space-y-6 bg-white">
+                    <div class="p-8 md:p-10 lg:border-r border-gray-100 space-y-8 bg-white">
                         <div>
-                            <h4 class="font-bold text-gray-900 text-sm uppercase tracking-wide border-b pb-2 mb-3">Data & Methods</h4>
-                            <ul class="text-sm text-gray-600 space-y-2 list-disc list-inside">
-                                <li>Multi-sensor satellite imagery preprocessing.</li>
-                                <li>Pixel-level raster processing and index calculations.</li>
-                                <li>Random Forest predictive projections.</li>
+                            <h4 class="font-bold text-gray-900 text-sm uppercase tracking-wider border-b-2 border-gray-100 pb-3 mb-4 flex items-center gap-2">
+                                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
+                                Data & Methods
+                            </h4>
+                            <ul class="text-sm text-gray-600 space-y-3 list-none">
+                                <li class="flex items-start gap-2"><span class="text-blue-500 mt-0.5">•</span> Multi-sensor satellite imagery preprocessing.</li>
+                                <li class="flex items-start gap-2"><span class="text-blue-500 mt-0.5">•</span> Pixel-level raster processing and index calculations.</li>
+                                <li class="flex items-start gap-2"><span class="text-blue-500 mt-0.5">•</span> Random Forest predictive projections.</li>
                             </ul>
                         </div>
                         <div>
-                            <h4 class="font-bold text-gray-900 text-sm uppercase tracking-wide border-b pb-2 mb-3">Validation Metrics</h4>
-                            <p class="text-sm text-gray-600">Model accuracy verified utilizing strict confusion matrices and Kappa coefficient validation to ensure high academic value and statistical reliability.</p>
+                            <h4 class="font-bold text-gray-900 text-sm uppercase tracking-wider border-b-2 border-gray-100 pb-3 mb-4 flex items-center gap-2">
+                                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                Validation Metrics
+                            </h4>
+                            <p class="text-sm text-gray-600 leading-relaxed">Model accuracy verified utilizing strict confusion matrices and Kappa coefficient validation to ensure high academic value and statistical reliability.</p>
                         </div>
                         <div class="pt-4 mt-auto">
-                            <a href="#" class="inline-block border-2 border-blue-900 text-blue-900 hover:bg-blue-900 hover:text-white px-4 py-2 rounded font-medium text-sm transition w-full text-center">
+                            <a href="#" class="inline-flex items-center justify-center gap-2 border-2 border-blue-900 text-blue-900 hover:bg-blue-900 hover:text-white px-5 py-3 rounded-md font-semibold text-sm transition-all duration-300 w-full text-center group">
                                 View Source Script / Repo
+                                <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                             </a>
                         </div>
                     </div>
 
-                    <!-- Right: Live Map Embed -->
-                    <div class="lg:col-span-2 relative min-h-[500px] bg-slate-100">
+                    <div class="lg:col-span-2 relative min-h-[500px] bg-slate-200">
                         <!-- REPLACE the SRC below with your actual GEE App or Web Map Link -->
                         <iframe 
                             src="https://www.google.com/maps/embed?pb=" 
@@ -126,10 +158,10 @@
                             allowfullscreen
                             loading="lazy">
                         </iframe>
-                        <!-- Overlay instruction (remove once you add your link) -->
                         <div class="absolute inset-0 pointer-events-none flex items-center justify-center">
-                            <span class="bg-white/90 text-gray-800 px-4 py-2 rounded shadow text-sm font-semibold border border-gray-200 backdrop-blur-sm">
-                                [ Live Dashboard Embed Viewport ]
+                            <span class="bg-white/95 text-gray-800 px-6 py-3 rounded-lg shadow-lg text-sm font-bold border border-gray-200 backdrop-blur-md uppercase tracking-widest text-center">
+                                <span class="block text-blue-600 mb-1 text-xs">Awaiting Link Integration</span>
+                                Live Dashboard Viewport
                             </span>
                         </div>
                     </div>
@@ -140,51 +172,63 @@
     </section>
 
     <!-- Interactive Weather Dashboard Embed Section -->
-    <section id="weather" class="py-20 bg-gray-50 border-t border-b border-gray-200">
+    <section id="weather" class="py-24 bg-slate-800 border-t border-b border-slate-900 text-white">
         <div class="max-w-7xl mx-auto px-6">
-            <div class="mb-12 text-center">
-                <h2 class="text-3xl font-bold text-gray-900 serif-title">Interactive Weather Map</h2>
-                <div class="w-20 h-1 bg-blue-600 mx-auto mt-4"></div>
-                <p class="text-gray-600 mt-4 max-w-2xl mx-auto">A live geospatial weather tracking application built with real-time API integrations.</p>
+            <div class="mb-14 text-center">
+                <h2 class="text-3xl font-bold serif-title text-white">Interactive Weather Map</h2>
+                <div class="w-20 h-1.5 bg-blue-500 mx-auto mt-4 rounded-full"></div>
+                <p class="text-slate-300 mt-6 max-w-2xl mx-auto text-lg">A live geospatial weather tracking application built with real-time API integrations.</p>
             </div>
             
-            <div class="bg-white rounded-xl shadow-xl overflow-hidden border border-gray-200">
-                <!-- This iframe displays the weather.html file right on the page -->
-                <iframe src="weather.html" class="w-full h-[600px] border-none"></iframe>
+            <div class="bg-white rounded-2xl shadow-2xl overflow-hidden border-4 border-slate-700">
+                <iframe src="weather.html" class="w-full h-[650px] border-none bg-slate-50"></iframe>
             </div>
         </div>
     </section>
 
     <!-- Technical Skills Section -->
-    <section id="technical" class="bg-white py-20">
+    <section id="technical" class="bg-white py-24">
         <div class="max-w-7xl mx-auto px-6">
-            <h2 class="text-2xl font-bold text-gray-900 mb-8 serif-title text-center">Comprehensive Technical Capabilities</h2>
+            <div class="mb-14 text-center">
+                <h2 class="text-3xl font-bold text-gray-900 serif-title">Comprehensive Technical Capabilities</h2>
+                <div class="w-20 h-1.5 bg-blue-700 mx-auto mt-4 rounded-full"></div>
+            </div>
+            
             <div class="grid md:grid-cols-3 gap-8 text-center">
                 
-                <div class="p-6 border border-gray-100 rounded-lg shadow-sm">
-                    <h3 class="font-bold text-gray-900 text-lg mb-4">Spatial Platforms</h3>
-                    <div class="flex flex-wrap justify-center gap-2">
-                        <span class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm">Google Earth Engine</span>
-                        <span class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm">ArcMap / ArcView</span>
-                        <span class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm">QGIS</span>
+                <div class="p-8 border border-gray-100 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 bg-slate-50">
+                    <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm border border-gray-100">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <h3 class="font-bold text-gray-900 text-xl mb-6">Spatial Platforms</h3>
+                    <div class="flex flex-wrap justify-center gap-3">
+                        <span class="bg-white border border-gray-200 text-gray-700 px-4 py-1.5 rounded-full text-sm font-medium hover:border-blue-300 hover:text-blue-700 transition-colors cursor-default">Google Earth Engine</span>
+                        <span class="bg-white border border-gray-200 text-gray-700 px-4 py-1.5 rounded-full text-sm font-medium hover:border-blue-300 hover:text-blue-700 transition-colors cursor-default">ArcMap / ArcView</span>
+                        <span class="bg-white border border-gray-200 text-gray-700 px-4 py-1.5 rounded-full text-sm font-medium hover:border-blue-300 hover:text-blue-700 transition-colors cursor-default">QGIS</span>
                     </div>
                 </div>
 
-                <div class="p-6 border border-gray-100 rounded-lg shadow-sm">
-                    <h3 class="font-bold text-gray-900 text-lg mb-4">Programming & Analytics</h3>
-                    <div class="flex flex-wrap justify-center gap-2">
-                        <span class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm">Python</span>
-                        <span class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm">rasterio</span>
-                        <span class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm">matplotlib / seaborn</span>
+                <div class="p-8 border border-gray-100 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 bg-slate-50">
+                    <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm border border-gray-100">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+                    </div>
+                    <h3 class="font-bold text-gray-900 text-xl mb-6">Programming</h3>
+                    <div class="flex flex-wrap justify-center gap-3">
+                        <span class="bg-white border border-gray-200 text-gray-700 px-4 py-1.5 rounded-full text-sm font-medium hover:border-blue-300 hover:text-blue-700 transition-colors cursor-default">Python</span>
+                        <span class="bg-white border border-gray-200 text-gray-700 px-4 py-1.5 rounded-full text-sm font-medium hover:border-blue-300 hover:text-blue-700 transition-colors cursor-default">rasterio</span>
+                        <span class="bg-white border border-gray-200 text-gray-700 px-4 py-1.5 rounded-full text-sm font-medium hover:border-blue-300 hover:text-blue-700 transition-colors cursor-default">matplotlib / seaborn</span>
                     </div>
                 </div>
 
-                <div class="p-6 border border-gray-100 rounded-lg shadow-sm">
-                    <h3 class="font-bold text-gray-900 text-lg mb-4">Core Competencies</h3>
-                    <div class="flex flex-wrap justify-center gap-2">
-                        <span class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm">Cartographic Design</span>
-                        <span class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm">Statistical Visualization</span>
-                        <span class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm">Data Digitizing</span>
+                <div class="p-8 border border-gray-100 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 bg-slate-50">
+                    <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm border border-gray-100">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"></path></svg>
+                    </div>
+                    <h3 class="font-bold text-gray-900 text-xl mb-6">Core Competencies</h3>
+                    <div class="flex flex-wrap justify-center gap-3">
+                        <span class="bg-white border border-gray-200 text-gray-700 px-4 py-1.5 rounded-full text-sm font-medium hover:border-blue-300 hover:text-blue-700 transition-colors cursor-default">Cartographic Design</span>
+                        <span class="bg-white border border-gray-200 text-gray-700 px-4 py-1.5 rounded-full text-sm font-medium hover:border-blue-300 hover:text-blue-700 transition-colors cursor-default">Statistical Visualization</span>
+                        <span class="bg-white border border-gray-200 text-gray-700 px-4 py-1.5 rounded-full text-sm font-medium hover:border-blue-300 hover:text-blue-700 transition-colors cursor-default">Data Digitizing</span>
                     </div>
                 </div>
 
@@ -192,9 +236,12 @@
         </div>
     </section>
 
-    <!-- Footer -->
-    <footer class="bg-gray-900 text-gray-400 py-8 text-center text-sm">
-        <p>&copy; 2026 Professional Geospatial Portfolio. Hosted on GitHub Pages.</p>
+    <!-- Minimal Footer -->
+    <footer class="bg-slate-900 text-slate-400 py-10 text-center text-sm border-t border-slate-800">
+        <div class="max-w-7xl mx-auto px-6 flex flex-col items-center">
+            <svg class="w-8 h-8 text-slate-600 mb-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+            <p>&copy; 2026 Professional Geospatial Portfolio. Hosted on GitHub Pages.</p>
+        </div>
     </footer>
 
 </body>
